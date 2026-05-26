@@ -1,0 +1,35 @@
+{
+  "agents": {
+    "defaults": {
+      "provider": "volcengine",
+      "model": "doubao-seed-2-0-pro-260215"
+    }
+  },
+  "providers": {
+    "volcengine": {
+      "apiKey": "${ARK_API_KEY}",
+      "apiBase": "https://ark.cn-beijing.volces.com/api/v3"
+    },
+    "openrouter": {
+      "apiKey": "${OPENROUTER_API_KEY}"
+    }
+  },
+  "channels": {
+    "websocket": {
+      "enabled": true
+    },
+    "sendToolHints": true
+  },
+  "memory_tree": {
+    "enabled": true,
+    "repo": "../memory_tree"
+  },
+  "tools": {
+    "imageGeneration": {
+      "enabled": true,
+      "provider": "volcengine",
+      "model": "doubao-seedream-4-5-251128",
+      "defaultImageSize": "2K"
+    }
+  }
+}

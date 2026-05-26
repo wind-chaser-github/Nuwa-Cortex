@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="Guide Cortex — 记忆 × 认知 × 执行的 personal AI 导师界面。"
+      data-i18n-meta="description"
+    />
+    <meta name="theme-color" content="#f7f4ed" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0d1117" media="(prefers-color-scheme: dark)" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%233d9a8b'/%3E%3Cstop offset='100%25' stop-color='%23c9a227'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%230d1117'/%3E%3Cpath d='M32 10c8 10 12 18 12 26a12 12 0 1 1-24 0c0-8 4-16 12-26z' fill='url(%23g)'/%3E%3C/svg%3E"
+    />
+    <style>
+      html,
+      body,
+      #root {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        background: #f7f4ed;
+        color: #141a22;
+        font-family:
+          "IBM Plex Sans", system-ui, -apple-system, "Noto Sans SC",
+          "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+
+      html.dark body {
+        background: #0d1117;
+        color: #ece7dc;
+      }
+
+      .boot-splash {
+        display: flex;
+        height: 100%;
+        align-items: center;
+        justify-content: center;
+        background:
+          radial-gradient(circle at 20% 20%, rgba(61, 154, 139, 0.12), transparent 42%),
+          radial-gradient(circle at 80% 0%, rgba(201, 162, 39, 0.1), transparent 38%);
+      }
+
+      .boot-splash-inner {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: rgba(20, 26, 34, 0.72);
+        font-size: 14px;
+        letter-spacing: 0.04em;
+      }
+
+      html.dark .boot-splash-inner {
+        color: rgba(236, 231, 220, 0.78);
+      }
+
+      .boot-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 9999px;
+        background: #3d9a8b;
+        opacity: 0.85;
+        animation: boot-pulse 1s ease-in-out infinite;
+      }
+
+      @keyframes boot-pulse {
+        0%,
+        100% {
+          transform: scale(0.9);
+          opacity: 0.45;
+        }
+        50% {
+          transform: scale(1);
+          opacity: 0.95;
+        }
+      }
+    </style>
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("guide_cortex-webui.theme");
+          var dark =
+            stored === "dark" ||
+            (!stored &&
+              window.matchMedia &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (dark) document.documentElement.classList.add("dark");
+        } catch {}
+      })();
+    </script>
+    <script>
+      (function () {
+        var localeKey = "guide_cortex.locale";
+        var copy = {
+          en: {
+            boot: "Awakening Guide Cortex…",
+            description: "Guide Cortex — memory × cognition × execution."
+          },
+          "zh-CN": {
+            boot: "正在唤醒Guide Cortex…",
+            description: "Guide Cortex — 记忆 × 认知 × 执行的 personal AI 导师界面。"
+          }
+        };
+
+        function normalizeLocale(input) {
+          if (!input) return "zh-CN";
+          var raw = String(input).trim();
+          if (!raw) return "zh-CN";
+          if (copy[raw]) return raw;
+          var lower = raw.toLowerCase();
+          if (lower === "zh" || lower.indexOf("zh-cn") === 0 || lower.indexOf("zh-sg") === 0) {
+            return "zh-CN";
+          }
+          return copy[raw] ? raw : "zh-CN";
+        }
+
+        try {
+          var stored = localStorage.getItem(localeKey);
+          var detected =
+            stored ||
+            (navigator.languages && navigator.languages[0]) ||
+            navigator.language ||
+            "zh-CN";
+          var locale = normalizeLocale(detected);
+          var localized = copy[locale] || copy["zh-CN"];
+          document.documentElement.lang = locale;
+          var description = document.querySelector('[data-i18n-meta="description"]');
+          if (description) description.setAttribute("content", localized.description);
+          var boot = document.querySelector("[data-boot-copy]");
+          if (boot) boot.textContent = localized.boot;
+        } catch {}
+      })();
+    </script>
+    <title>Guide Cortex</title>
+  </head>
+  <body class="bg-background text-foreground antialiased">
+    <div id="root">
+      <div class="boot-splash">
+        <div class="boot-splash-inner">
+          <span class="boot-dot" aria-hidden="true"></span>
+          <span data-boot-copy>正在唤醒Guide Cortex…</span>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

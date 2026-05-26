@@ -1,0 +1,56 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+*.egg-info/
+.eggs/
+build/
+
+# Node / WebUI
+node_modules/
+webui/node_modules/
+webui/dist/
+webui/.vite/
+webui/coverage/
+*.tsbuildinfo
+
+# Secrets & local config
+.env
+.env.*
+!.env.example
+.nuwa-cortex/
+.guide_cortex/
+config.local.json
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+.cursor/
+
+# Runtime workspace data (keep skills/templates)
+workspace_template/sessions/
+workspace_template/cron/jobs.json
+workspace_template/ingest/manifest.json
+workspace_template/ingest/personas.json
+workspace_template/.git/
+workspace_template/memory/history.jsonl
+
+# Logs & temp
+*.log
+tmp/
+temp/
+.cache/
+
+# Bridge / misc build
+bridge/node_modules/
