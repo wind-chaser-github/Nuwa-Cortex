@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 import os
+import re
 import time
 from contextlib import AsyncExitStack, nullcontext, suppress
 from dataclasses import dataclass, field
@@ -596,10 +597,53 @@ class AgentLoop:
         return False
 
     def _skill_names_for_message(self, msg: InboundMessage) -> list[str] | None:
-        persona = msg.metadata.get("guide_persona")
-        if isinstance(persona, str) and persona.strip():
-            return [persona.strip()]
-        return None
+        def _norm(value: str) -> str:
+            return re.sub(r"[\s_]+", "-", value.strip().lower())
+
+        persona_raw = (
+            msg.metadata.get("guide_persona")
+            or msg.metadata.get("persona")
+            or msg.metadata.get("guidePersona")
+        )
+        if not isinstance(persona_raw, str) or not persona_raw.strip():
+            return None
+        persona = persona_raw.strip()
+
+        available = self.context.skills.list_skills(filter_unavailable=False)
+        if not available:
+            logger.warning("Persona requested but no skills available: {}", persona)
+            return None
+
+        by_name = {entry["name"]: entry["name"] for entry in available}
+        if persona in by_name:
+            return [persona]
+
+        alias_to_name: dict[str, str] = {}
+        for entry in available:
+            name = entry["name"]
+            alias_to_name[_norm(name)] = name
+            meta = self.context.skills.get_skill_metadata(name) or {}
+            display = meta.get("name")
+            if isinstance(display, str) and display.strip():
+                alias_to_name[_norm(display)] = name
+            aliases = meta.get("aliases")
+            if isinstance(aliases, list):
+                for alias in aliases:
+                    if isinstance(alias, str) and alias.strip():
+                        alias_to_name[_norm(alias)] = name
+
+        resolved = alias_to_name.get(_norm(persona))
+        if resolved:
+            logger.info("Resolved persona alias '{}' -> '{}'", persona, resolved)
+            return [resolved]
+
+        always = self.context.skills.get_always_skills()
+        logger.warning(
+            "Unknown persona '{}', fallback to always skills: {}",
+            persona,
+            always,
+        )
+        return always or None
 
     def _build_initial_messages(
         self,
@@ -609,6 +653,19 @@ class AgentLoop:
         pending_summary: str | None,
     ) -> list[dict[str, Any]]:
         """Build the initial message list for the LLM turn."""
+        skill_names = self._skill_names_for_message(msg)
+        logger.info(
+            "Turn persona metadata={}, resolved skills={}",
+            {
+                "guide_persona": msg.metadata.get("guide_persona"),
+                "persona": msg.metadata.get("persona"),
+                "guidePersona": msg.metadata.get("guidePersona"),
+                "session_key": msg.session_key,
+                "channel": msg.channel,
+                "chat_id": msg.chat_id,
+            },
+            skill_names,
+        )
         return self.context.build_messages(
             history=history,
             current_message=image_generation_prompt(msg.content, msg.metadata),
@@ -617,7 +674,7 @@ class AgentLoop:
             chat_id=self._runtime_chat_id(msg),
             sender_id=msg.sender_id,
             session_summary=pending_summary,
-            skill_names=self._skill_names_for_message(msg),
+            skill_names=skill_names,
         )
 
     async def _dispatch_command_inline(

@@ -684,14 +684,15 @@ class WebSocketChannel(BaseChannel):
                 self._api_tokens.pop(token_key, None)
 
     def _handle_webui_bootstrap(self, connection: Any, request: Any) -> Response:
-        # When a secret is configured (token_issue_secret or static token),
-        # validate it regardless of source IP.  This secures deployments
-        # behind a reverse proxy where all connections appear as localhost.
-        secret = self.config.token_issue_secret.strip() or self.config.token.strip()
+        # When a token-issue secret is configured, validate it regardless of
+        # source IP. For wildcard-host deployments (0.0.0.0/::), allow
+        # unauthenticated bootstrap by default so the hosted WebUI can load
+        # without prompting for a password.
+        secret = self.config.token_issue_secret.strip()
         if secret:
             if not _issue_route_secret_matches(request.headers, secret):
                 return _http_error(401, "Unauthorized")
-        elif not _is_localhost(connection):
+        elif not _is_localhost(connection) and self.config.host not in ("0.0.0.0", "::"):
             # No secret configured: only allow localhost (local dev mode).
             return _http_error(403, "webui bootstrap is localhost-only")
         # Cap outstanding tokens to avoid runaway growth from a misbehaving client.
@@ -1568,6 +1569,12 @@ class WebSocketChannel(BaseChannel):
             persona = envelope.get("guide_persona") or envelope.get("persona")
             if isinstance(persona, str) and persona.strip():
                 metadata["guide_persona"] = persona.strip()
+            self.logger.info(
+                "WebSocket inbound chat={} persona={} webui={}",
+                cid,
+                metadata.get("guide_persona"),
+                metadata.get("webui", False),
+            )
             image_generation = envelope.get("image_generation")
             if isinstance(image_generation, dict) and image_generation.get("enabled") is True:
                 aspect_ratio = image_generation.get("aspect_ratio")

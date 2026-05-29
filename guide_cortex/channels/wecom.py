@@ -153,20 +153,20 @@ class WecomChannel(BaseChannel):
             await self._client.disconnect()
         self.logger.info("bot stopped")
 
-    async def _on_connected(self, frame: Any) -> None:
+    async def _on_connected(self, frame: Any = None) -> None:
         """Handle WebSocket connected event."""
         self.logger.info("WebSocket connected")
 
-    async def _on_authenticated(self, frame: Any) -> None:
+    async def _on_authenticated(self, frame: Any = None) -> None:
         """Handle authentication success event."""
         self.logger.info("authenticated successfully")
 
-    async def _on_disconnected(self, frame: Any) -> None:
+    async def _on_disconnected(self, frame: Any = None) -> None:
         """Handle WebSocket disconnected event."""
-        reason = frame.body if hasattr(frame, 'body') else str(frame)
+        reason = frame.body if hasattr(frame, "body") else (str(frame) if frame else "unknown")
         self.logger.warning("WebSocket disconnected: {}", reason)
 
-    async def _on_error(self, frame: Any) -> None:
+    async def _on_error(self, frame: Any = None) -> None:
         """Handle error event."""
         self.logger.error("error: {}", frame)
 

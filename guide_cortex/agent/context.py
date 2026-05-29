@@ -65,6 +65,15 @@ class ContextBuilder:
         if not active_skills and always_skills:
             active_skills = always_skills
         if active_skills:
+            # When a persona skill is explicitly selected, pin role behavior so
+            # the model cannot silently drift back to a generic assistant tone.
+            parts.append(
+                "## Active Persona Contract\n\n"
+                "A persona skill is explicitly selected for this turn. "
+                "You MUST follow the active persona's SKILL instructions as the highest-priority style/voice policy "
+                "(within safety boundaries). "
+                "Reply in first-person from that persona perspective unless the user explicitly asks to exit persona mode."
+            )
             active_content = self.skills.load_skills_for_context(active_skills)
             if active_content:
                 parts.append(f"# Active Skills\n\n{active_content}")
@@ -89,9 +98,12 @@ class ContextBuilder:
             if persona_notes:
                 parts.append(persona_notes)
 
-        skills_summary = self.skills.build_skills_summary(exclude=set(active_skills))
-        if skills_summary:
-            parts.append(render_template("agent/skills_section.md", skills_summary=skills_summary))
+        # Avoid diluting persona behavior with a giant catalog when a specific
+        # persona is already active for this turn.
+        if not active_skills:
+            skills_summary = self.skills.build_skills_summary(exclude=set(active_skills))
+            if skills_summary:
+                parts.append(render_template("agent/skills_section.md", skills_summary=skills_summary))
 
         entries = self.memory.read_unprocessed_history(since_cursor=self.memory.get_last_dream_cursor())
         if entries:
